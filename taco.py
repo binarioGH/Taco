@@ -37,9 +37,10 @@ def main(args=[]):
 	op.add_option("-o", "--dictionaryName",dest="filename", default="{}.txt".format(getDate()), help="Select a name for the output file.")
 	op.add_option("-n", "--min", dest="min", default=1, type="int", help="Define the minimum number of combinations for each iteration. (predefined as 1)")
 	op.add_option("-m", "--max", dest="max", default=5, type="int", help="Define the maximum number of combinations for each iteration. (predefined as 5)")
+	op.add_option("-t", "--total", dest="total", default=-1, type="int", help="Break the password generator after X iterations.")
 	(o, args) = op.parse_args()
 	keywords = []
-	print(o.keywords)
+
 	if o.keywordsfile != " ":
 		result = readKWF(o.keywordsfile, o.codec)
 		if result == -1: 
@@ -56,7 +57,17 @@ def main(args=[]):
 	print("Total ammount of passwords to generate: {}".format(total_passwords))
 	print("Starting to generate passwords at {}...".format(time("%H:%M:%S")))
 	for iterations in range(o.min, o.max+1):
+		if iterations == int(total_passwords * 0.25):
+			print("\n25% DONE!\n")
+		elif iterations == int(total_passwords * 0.50):
+			print("\n50% DONE!\n")
+		elif iterations == int(total_passwords * 0.75):
+			print("\n75% DONE!\n")
+		elif iterations == o.total:
+			break
 		permuted_words += generatePWords(keywords, iterations)
+	if iterations+1 == total_passwords:
+			print("\n100% DONE!!!!!!!!!\n")
 	print("Finishing at {}...".format(time("%H:%M:%S")))
 	permuted_words = "\n".join(permuted_words)
 	with copen(o.filename, "w", o.codec) as writeOutput:
