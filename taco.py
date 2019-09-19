@@ -4,6 +4,7 @@ from sys import argv
 from optparse import OptionParser as opt
 from codecs import open as copen
 from time import strftime as time
+from lib import *
 getDate = lambda: time("%d-%m-%y-%H-%M-%S")
 def readKWF(file,encding="utf-8"):
 	try:
@@ -32,7 +33,7 @@ def calpass(klen, n, m):
 def main(args=[]):
 	op = opt("Usage: %prog [flags] [values]")
 	op.add_option("-k", "--keywords", dest="keywords", default=" ", type="string",help="Introduce a list of keywords separeted by commas. exp: -k hello,world,1985 == ['hello', 'world', '1985']")
-	op.add_option("-d", "--keywordsfile",dest="keywordsfile", default=" ", type="string",help="Select a file with a list of keywords.")
+	op.add_option("-d", "--keywordsfile",dest="keywordsfile", default=0, type="string",help="Select a file with a list of keywords.")
 	op.add_option("-c", "--kwfile_codec", dest="codec", default="utf-8", help="Select a codec for your keyword file. (default is utf-8)")
 	op.add_option("-o", "--dictionaryName",dest="filename", default="{}.txt".format(getDate()), help="Select a name for the output file.")
 	op.add_option("-n", "--min", dest="min", default=1, type="int", help="Define the minimum number of combinations for each iteration. (predefined as 1)")
@@ -41,7 +42,7 @@ def main(args=[]):
 	(o, args) = op.parse_args()
 	keywords = []
 
-	if o.keywordsfile != " ":
+	if o.keywordsfile != 0:
 		result = readKWF(o.keywordsfile, o.codec)
 		if result == -1: 
 			print("There was a problem opening the file.")
@@ -50,7 +51,9 @@ def main(args=[]):
 	if o.keywords != " ":
 		o.keywords = o.keywords.split(",")
 		keywords += o.keywords
-
+	if len(keywords) == 0:
+		print("You must define some keywords...")
+		return -2
 	permuted_words = []
 	print("Calculating ammount of passwords...")
 	total_passwords = calpass(len(keywords), o.min, o.max)
@@ -76,4 +79,5 @@ def main(args=[]):
 
 
 if __name__ == '__main__':
+	banner()
 	main(argv)
