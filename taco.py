@@ -8,12 +8,14 @@ from lib import *
 getDate = lambda: time("%d-%m-%y-%H-%M-%S")
 
 class PasswordGenerator:
-	def __init__(self, upper=False, lower=False, title=False, alpha=False):
+	def __init__(self, upper=False, lower=False, title=False, alpha=False, mn=-1, mx=-1):
 		self.passwordsList = []
 		self.upper = upper
 		self.lower = lower
 		self.title = title
 		self.alpha = alpha
+		self.min = mn
+		self.max = mx
 
 	def __addPassword(self, password):
 		if password in self.passwordsList:
@@ -26,6 +28,13 @@ class PasswordGenerator:
 		combinations = product(words, repeat=lng)
 		for password in combinations: 
 			password = "".join(password)
+			lpass = len(password)
+			if self.min != -1:
+				if lpass < self.min:
+					continue
+			if self.max != -1:
+				if lpass > self.max:
+					continue
 			self.__addPassword(password)
 			if self.upper:
 				self.__addPassword(password.upper())
@@ -35,6 +44,7 @@ class PasswordGenerator:
 				self.__addPassword(password.title())
 			if self.alpha:
 				self.__addPassword(alph4(password))
+
 	def calpass(self, klen, n, m):
 		total = 0
 		for num in range(n,m+1):
@@ -64,6 +74,8 @@ def main(args=[]):
 	op.add_option("-l", "--lower", dest="lower", default=False, action="store_true", help="Create extra passwords in lower case. [password]")
 	op.add_option("-T", "--Title", dest="title", default=False, action="store_true", help="Create extra passwords starting with a capital letter. [Password]")
 	op.add_option("-a", "--alphanumeric", dest="alpha", default=False, action="store_true", help="Create extra passwords in alpha numeric. [p455w0rd]")
+	op.add_option("-M", "--maxLen", dest="maxlen", default=-1, type="int", help="Set the maximum length of the passwords. [-1 for not defined max len]")
+	op.add_option("-N", "--minLen", dest="minlen", default=-1, type="int", help="Set the minumum length of the passwords. [-1 for not defined min len]")
 	(o, args) = op.parse_args()
 	keywords = []
 
@@ -79,10 +91,10 @@ def main(args=[]):
 	if len(keywords) == 0:
 		print("You must define some keywords...")
 		return -2
-	taco = PasswordGenerator(o.upper, o.lower, o.title, o.alpha)
+	taco = PasswordGenerator(o.upper, o.lower, o.title, o.alpha, o.minlen, o.maxlen)
 	print("Calculating ammount of passwords...")
 	total_passwords = taco.calpass(len(keywords), o.min, o.max)
-	print("Total ammount of passwords to generate: {}".format(total_passwords))
+	print("Approximate ammount of passwords to generate: {}".format(total_passwords))
 	print("Starting to generate passwords at {}...".format(time("%H:%M:%S")))
 	for iterations in range(o.min, o.max+1):
 		if iterations == int(total_passwords * 0.25):
