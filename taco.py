@@ -6,28 +6,49 @@ from codecs import open as copen
 from time import strftime as time
 from lib import *
 getDate = lambda: time("%d-%m-%y-%H-%M-%S")
-def readKWF(file,encding="utf-8"):
-	try:
-		with copen(file, "r",  encding) as f:
-			content = f.read().split()
-	except:
-		return -1
-	else:
-		return content
 
-def generatePWords(words, lng):
-	combinations = product(words, repeat=lng)
-	passwords = []
-	for password in combinations: 
-		password = "".join(password)
-		passwords.append(password)
-	return passwords
+class PasswordGenerator:
+	def __init__(self, upper=False, lower=False, title=False, alpha=False):
+		self.passwordsList = []
+		self.upper = upper
+		self.lower = lower
+		self.title = title
+		self.alpha = alpha
 
-def calpass(klen, n, m):
-	total = 0
-	for num in range(n,m+1):
-		total += klen**num
-	return total
+	def __addPassword(self, password):
+		if password in self.passwordsList:
+			return -1
+		else:
+			self.passwordsList.append(password)
+			return 0
+
+	def generatePWords(self, words, lng):
+		combinations = product(words, repeat=lng)
+		for password in combinations: 
+			password = "".join(password)
+			self.__addPassword(password)
+			if self.upper:
+				self.__addPassword(password.upper())
+			if self.lower:
+				self.__addPassword(password.lower())
+			if self.title:
+				self.__addPassword(password.title())
+			if self.alpha:
+				self.__addPassword(alph4(password))
+	def calpass(self, klen, n, m):
+		total = 0
+		for num in range(n,m+1):
+			total += klen**num
+		ftotal = total
+		if self.upper:
+			total += ftotal
+		if self.lower:
+			total += ftotal
+		if self.title:
+			total += ftotal
+		if self.alpha:
+			total += ftotal
+		return total
 		
 
 def main(args=[]):
@@ -39,6 +60,10 @@ def main(args=[]):
 	op.add_option("-n", "--min", dest="min", default=1, type="int", help="Define the minimum number of combinations for each iteration. (predefined as 1)")
 	op.add_option("-m", "--max", dest="max", default=5, type="int", help="Define the maximum number of combinations for each iteration. (predefined as 5)")
 	op.add_option("-t", "--total", dest="total", default=-1, type="int", help="Break the password generator after X iterations.")
+	op.add_option("-u", "--upper", dest="upper", default=False, action="store_true", help="Create extra passwords in upper case. [PASSWORD]")
+	op.add_option("-l", "--lower", dest="lower", default=False, action="store_true", help="Create extra passwords in lower case. [password]")
+	op.add_option("-T", "--Title", dest="title", default=False, action="store_true", help="Create extra passwords starting with a capital letter. [Password]")
+	op.add_option("-a", "--alphanumeric", dest="alpha", default=False, action="store_true", help="Create extra passwords in alpha numeric. [p455w0rd]")
 	(o, args) = op.parse_args()
 	keywords = []
 
@@ -54,9 +79,9 @@ def main(args=[]):
 	if len(keywords) == 0:
 		print("You must define some keywords...")
 		return -2
-	permuted_words = []
+	taco = PasswordGenerator(o.upper, o.lower, o.title, o.alpha)
 	print("Calculating ammount of passwords...")
-	total_passwords = calpass(len(keywords), o.min, o.max)
+	total_passwords = taco.calpass(len(keywords), o.min, o.max)
 	print("Total ammount of passwords to generate: {}".format(total_passwords))
 	print("Starting to generate passwords at {}...".format(time("%H:%M:%S")))
 	for iterations in range(o.min, o.max+1):
@@ -68,11 +93,12 @@ def main(args=[]):
 			print("\n75% DONE!\n")
 		elif iterations == o.total:
 			break
-		permuted_words += generatePWords(keywords, iterations)
+		taco.generatePWords(keywords, iterations)
 	if iterations+1 == total_passwords:
 			print("\n100% DONE!!!!!!!!!\n")
 	print("Finishing at {}...".format(time("%H:%M:%S")))
-	permuted_words = "\n".join(permuted_words)
+	print("Total ammout of passwords: {}".format(len(taco.passwordsList)))
+	permuted_words = "\n".join(taco.passwordsList)
 	with copen(o.filename, "w", o.codec) as writeOutput:
 		writeOutput.write(permuted_words)
 
