@@ -5,10 +5,11 @@ from optparse import OptionParser as opt
 from codecs import open as copen
 from time import strftime as time
 from lib import *
+from hashlib import md5, sha1, sha224, sha256, sha384, sha3_224, sha3_256, sha3_384, sha3_512, sha512
 getDate = lambda: time("%d-%m-%y-%H-%M-%S")
 
 class PasswordGenerator:
-	def __init__(self, upper=False, lower=False, title=False, alpha=False, mn=-1, mx=-1):
+	def __init__(self, upper=False, lower=False, title=False, alpha=False, mn=-1, mx=-1, hsh="NoNe"):
 		self.passwordsList = []
 		self.upper = upper
 		self.lower = lower
@@ -16,13 +17,31 @@ class PasswordGenerator:
 		self.alpha = alpha
 		self.min = mn
 		self.max = mx
+		self.hash = hsh
+		self.hashes = {
+		"md5": md5,
+		"sha1": sha1,
+		"sha224": sha224,
+		"sha256": sha256,
+		"sha384": sha384,
+		"sha3_224": sha3_224,
+		"sha3_256": sha3_256,
+		"sha3_384": sha3_384,
+		"sha3_512": sha3_512,
+		"sha512": sha512
+		}
 
 	def __addPassword(self, password):
 		if password in self.passwordsList:
 			return -1
 		else:
+			if self.hash != "NoNe":
+				password += "  |  {}".format(self.__hashIt(password))
 			self.passwordsList.append(password)
 			return 0
+
+	def __hashIt(self, word):
+		return self.hashes[self.hash](word.encode()).hexdigest()
 
 	def generatePWords(self, words, lng):
 		combinations = product(words, repeat=lng)
@@ -76,9 +95,16 @@ def main(args=[]):
 	op.add_option("-a", "--alphanumeric", dest="alpha", default=False, action="store_true", help="Create extra passwords in alpha numeric. [p455w0rd]")
 	op.add_option("-M", "--maxLen", dest="maxlen", default=-1, type="int", help="Set the maximum length of the passwords. [-1 for not defined max len]")
 	op.add_option("-N", "--minLen", dest="minlen", default=-1, type="int", help="Set the minumum length of the passwords. [-1 for not defined min len]")
+	op.add_option("-H", "--hash", dest="hash", default="NoNe", type="string", help="Append the hash of your password next to your password.")
+	op.add_option("-L", "--listhashes", dest="listhashes", default=False, action="store_true", help="List all the hashes compatible with this script.")
 	(o, args) = op.parse_args()
 	keywords = []
-
+	taco = PasswordGenerator(o.upper, o.lower, o.title, o.alpha, o.minlen, o.maxlen, o.hash)
+	if o.listhashes:
+		print("\n\n	   Hashes: \n\n")
+		for hsh in taco.hashes:
+			print("			> {}".format(hsh))
+		return 1
 	if o.keywordsfile != 0:
 		result = readKWF(o.keywordsfile, o.codec)
 		if result == -1: 
@@ -91,7 +117,6 @@ def main(args=[]):
 	if len(keywords) == 0:
 		print("You must define some keywords...")
 		return -2
-	taco = PasswordGenerator(o.upper, o.lower, o.title, o.alpha, o.minlen, o.maxlen)
 	print("Calculating ammount of passwords...")
 	total_passwords = taco.calpass(len(keywords), o.min, o.max)
 	print("Approximate ammount of passwords to generate: {}".format(total_passwords))
