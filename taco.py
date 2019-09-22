@@ -137,6 +137,8 @@ def main(args=[]):
 	print("Total ammout of passwords: {}".format(len(taco.passwordsList)))
 	permuted_words = "\n".join(taco.passwordsList)
 	with copen(o.filename, "w", o.codec) as writeOutput:
+		if o.hash != "NoNe":
+			writeOutput.write("# -*- Hash dictionary file: {}\n".format(o.hash))
 		writeOutput.write(permuted_words)
 
 
