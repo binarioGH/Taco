@@ -9,7 +9,7 @@ from hashlib import md5, sha1, sha224, sha256, sha384, sha3_224, sha3_256, sha3_
 getDate = lambda: time("%d-%m-%y-%H-%M-%S")
 
 class PasswordGenerator:
-	def __init__(self, upper=False, lower=False, title=False, alpha=False, mn=-1, mx=-1, hsh="NoNe"):
+	def __init__(self, upper=False, lower=False, title=False, alpha=False, mn=-1, mx=-1, hsh="NoNe", total=-1):
 		self.passwordsList = []
 		self.upper = upper
 		self.lower = lower
@@ -30,6 +30,8 @@ class PasswordGenerator:
 		"sha3_512": sha3_512,
 		"sha512": sha512
 		}
+		self.top = total
+		self.stop = False
 
 	def __addPassword(self, password):
 		if password in self.passwordsList:
@@ -43,7 +45,7 @@ class PasswordGenerator:
 	def __hashIt(self, word):
 		return self.hashes[self.hash](word.encode()).hexdigest()
 
-	def generatePWords(self, words, lng):
+	def generatePWords(self, words, lng, prnt=False):
 		combinations = product(words, repeat=lng)
 		for password in combinations: 
 			password = "".join(password)
@@ -54,6 +56,12 @@ class PasswordGenerator:
 			if self.max != -1:
 				if lpass > self.max:
 					continue
+			if prnt:
+				print(password)
+			if self.top != -1:
+				if len(self.passwordsList) >= self.top:
+					self.stop = True
+					break
 			self.__addPassword(password)
 			if self.upper:
 				self.__addPassword(password.upper())
@@ -97,9 +105,10 @@ def main(args=[]):
 	op.add_option("-N", "--minLen", dest="minlen", default=-1, type="int", help="Set the minumum length of the passwords. [-1 for not defined min len]")
 	op.add_option("-H", "--hash", dest="hash", default="NoNe", type="string", help="Append the hash of your password next to your password.")
 	op.add_option("-L", "--listhashes", dest="listhashes", default=False, action="store_true", help="List all the hashes compatible with this script.")
+	op.add_option("-p", "--print", dest="print", default=False, action="store_true", help="Print each iteration in the console.")
 	(o, args) = op.parse_args()
 	keywords = []
-	taco = PasswordGenerator(o.upper, o.lower, o.title, o.alpha, o.minlen, o.maxlen, o.hash)
+	taco = PasswordGenerator(o.upper, o.lower, o.title, o.alpha, o.minlen, o.maxlen, o.hash, o.total)
 	if o.listhashes:
 		print("\n\n	   Hashes: \n\n")
 		for hsh in taco.hashes:
@@ -128,9 +137,10 @@ def main(args=[]):
 			print("\n50% DONE!\n")
 		elif iterations == int(total_passwords * 0.75):
 			print("\n75% DONE!\n")
-		elif iterations == o.total:
+		if taco.stop:
+			print("We reached the limit!")
 			break
-		taco.generatePWords(keywords, iterations)
+		taco.generatePWords(keywords, iterations, o.print)
 	if iterations+1 == total_passwords:
 			print("\n100% DONE!!!!!!!!!\n")
 	print("Finishing at {}...".format(time("%H:%M:%S")))
