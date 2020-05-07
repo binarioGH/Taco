@@ -70,7 +70,7 @@ def main(args):
 				return -5
 	print("Starting to search hash...")
 	if o.hash in content:
-		print("Hash value founded!!!!")
+		print("The Hash value was found!!!!")
 		print("Hash: {}".format(o.hash))
 		print("Value: {}".format(content[o.hash]))
 		if o.copy:
